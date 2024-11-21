@@ -1,5 +1,4 @@
 #!/bin/bash
-
-echo "Building the Docker image..."
-docker build -t react-app:latest .
+# Build the Docker image
+docker build -t devops-build-app .
 

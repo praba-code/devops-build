@@ -1,5 +1,4 @@
 #!/bin/bash
-
-echo "Deploying the Docker container..."
+# Deploy the application using docker-compose
 docker-compose up -d
 
