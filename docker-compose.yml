@@ -1,14 +1,7 @@
-version: '3'
-
+version: "3.8"
 services:
-  web:
+  app:
     build: .
     ports:
-      - "80:80"
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
+      - "80:3000"
 
