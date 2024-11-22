@@ -1,27 +1,22 @@
-# Use an official Node.js runtime as a parent image
+# Step 1: Use Node.js as the base image
 FROM node:16
 
-# Set the working directory
-WORKDIR /usr/src/app
+# Step 2: Set the working directory
+WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
-
-# Install dependencies
+# Step 3: Copy package.json and install dependencies
+COPY package.json ./
 RUN npm install
 
-# Copy the application code
+# Step 4: Copy the entire app code
 COPY . .
 
-# Build the application
+# Step 5: Build the app
 RUN npm run build
 
-# Set the default port
-ENV PORT 80
-
-# Expose port
+# Step 6: Expose port 80 for HTTP traffic
 EXPOSE 80
 
-# Run the application
-CMD ["npx", "serve", "-s", "build", "-l", "80"]
+# Step 7: Run the app
+CMD ["npm", "start"]
 
