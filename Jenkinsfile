@@ -1,48 +1,56 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_REPO_DEV = 'your-dockerhub-username/dev'
-        DOCKER_HUB_REPO_PROD = 'your-dockerhub-username/prod'
-        DOCKER_HUB_CREDENTIALS = 'docker-hub-credentials'  // Replace with your Jenkins credential ID
+        DOCKER_DEV_REPO = 'your-dockerhub-username/dev' // Dev repository in Docker Hub
+        DOCKER_PROD_REPO = 'your-dockerhub-username/prod' // Prod repository in Docker Hub
+        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials' // Docker Hub credentials in Jenkins
+    }
+    triggers {
+        githubPush() // Trigger builds on push events
     }
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 checkout scm
             }
         }
-        
-        stage('Docker Build and Push') {
+        stage('Build and Push Docker Image - Dev') {
+            when {
+                branch 'dev' // Trigger only on dev branch
+            }
             steps {
                 script {
-                    def branch = env.BRANCH_NAME
-                    def repo = branch == 'dev' ? "${DOCKER_HUB_REPO_PROD}" : "${DOCKER_HUB_REPO_DEV}"
-
-                    // Login to Docker Hub
-                    echo "Logging into Docker Hub"
-                    withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIALS, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
-                    }
-
-                    // Build Docker image
-                    echo "Building Docker image for ${repo}"
-                    sh './build.sh'
-
-                    // Tag Docker image
-                    sh "docker tag your-dockerhub-username/dev:latest ${repo}:latest"
-                    
-                    // Push Docker image
-                    echo "Pushing Docker image to ${repo}"
-                    sh "docker push ${repo}:latest"
+                    echo 'Building Docker image for Dev repository'
+                    sh '''
+                        docker build -t $DOCKER_DEV_REPO:latest .
+                        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+                        docker push $DOCKER_DEV_REPO:latest
+                    '''
+                }
+            }
+        }
+        stage('Build and Push Docker Image - Prod') {
+            when {
+                branch 'main' // Trigger only on master branch
+            }
+            steps {
+                script {
+                    echo 'Building Docker image for Prod repository'
+                    sh '''
+                        docker build -t $DOCKER_PROD_REPO:latest .
+                        docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+                        docker push $DOCKER_PROD_REPO:latest
+                    '''
                 }
             }
         }
     }
     post {
-        always {
-            // Optional: Deploy to server (EC2, Kubernetes, etc.)
-            echo "Deploying the app"
-            sh './deploy.sh'
+        success {
+            echo 'Build, Push, and Deploy stages executed successfully.'
+        }
+        failure {
+            echo 'Build failed. Check logs for errors.'
         }
     }
 }
