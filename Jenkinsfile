@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_REPO_DEV = 'your-dockerhub-username/dev-app'
-        DOCKER_HUB_REPO_PROD = 'your-dockerhub-username/prod-app'
+        DOCKER_HUB_REPO_DEV = 'your-dockerhub-username/dev'
+        DOCKER_HUB_REPO_PROD = 'your-dockerhub-username/prod'
         DOCKER_HUB_CREDENTIALS = 'docker-hub-credentials'  // Replace with your Jenkins credential ID
     }
     stages {
@@ -29,7 +29,7 @@ pipeline {
                     sh './build.sh'
 
                     // Tag Docker image
-                    sh "docker tag your-dockerhub-username/dev-app:latest ${repo}:latest"
+                    sh "docker tag your-dockerhub-username/dev:latest ${repo}:latest"
                     
                     // Push Docker image
                     echo "Pushing Docker image to ${repo}"
