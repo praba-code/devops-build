@@ -56,14 +56,15 @@ pipeline {
                     sh '''
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << EOF
                         set -e
+
                         echo "Pulling the latest image..."
                         sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
 
-                        echo "Stopping any container running on port 80..."
-                        CONTAINER_ID=$(sudo docker ps -q --filter "ancestor=${DOCKER_REPO_PROD}:${IMG_NAME}")
-                        if [ ! -z "$CONTAINER_ID" ]; then
-                            sudo docker stop $CONTAINER_ID
-                            sudo docker rm $CONTAINER_ID
+                        echo "Checking for an existing container named my-nx..."
+                        if [ $(sudo docker ps -aq -f name=my-nx) ]; then
+                            echo "Stopping and removing the existing container..."
+                            sudo docker stop my-nx || true
+                            sudo docker rm my-nx || true
                         fi
 
                         echo "Running the new container..."
