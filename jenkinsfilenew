@@ -47,24 +47,16 @@ pipeline {
                 branch 'main'
             }
  		steps {
-                sshagent(['ec2-ssh-credentials']) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << 'EOF'
-                        set -e  # Exit immediately if a command exits with a non-zero status
-                        echo "Pulling the latest image..."
-                        sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
-                        
-                        echo "Checking and stopping any container using port 80..."
-                        if sudo lsof -i :80; then
-                            sudo docker stop \$(sudo docker ps -q --filter "publish=80") || true
-                            sudo docker rm \$(sudo docker ps -aq --filter "publish=80") || true
-                        fi
-
-                        echo "Running new container..."
-                        sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
-                        echo "Deployment completed!"
-                        EOF
-                    """
+        	sshagent(['ec2-ssh-credentials']) {  // SSH Key stored in Jenkins credentials
+            	sh """
+                	# Ensure SSH connection to EC2 and run commands
+                	ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP} << EOF
+               	 	sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
+                	sudo docker stop my-nx || true
+                	sudo docker rm my-nx || true
+                	sudo docker run -d -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
+                	EOF
+          	"""
                 }
             }
         }
@@ -75,7 +67,6 @@ pipeline {
         }
     }
 }
-
 
 
 
