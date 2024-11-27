@@ -1,35 +1,27 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials') // Store Docker Hub credentials in Jenkins
-        DOCKER_IMAGE = "prabadevops1003/dev"
-    }
-    triggers {
-        githubPush()
+        IMG_NAME = 'my-nx'
+        DOCKER_REPO = 'prabadevops1003/dev'
     }
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'dev', url: 'https://github.com/praba-code/devops-build.git'
-            }
-        }
-        stage('Build Docker Image') {
+        stage('build') {
             steps {
                 script {
-                    sh 'docker build -t ${DOCKER_IMAGE}:${env.BUILD_NUMBER} .'
+                        sh 'docker build -t ${IMG_NAME} .'
+                        sh 'docker tag ${IMG_NAME} ${DOCKER_REPO}:${IMG_NAME}'
                 }
             }
         }
-        stage('Push to Docker Hub') {
+        stage('push') {
             steps {
-                script {
-                    sh '''
-                        echo ${DOCKER_HUB_CREDENTIALS_PSW} | docker login -u ${DOCKER_HUB_CREDENTIALS_USR} --password-stdin
-                        docker push ${DOCKER_IMAGE}:${env.BUILD_NUMBER}
-                    '''
+                withCredentials([usernamePassword(credentialsId: 'DockerHub-LG', passwordVariable: 'PSWD', usernameVariable: 'LOGIN')]) {
+                    script {
+                        sh 'echo ${PSWD} | docker login -u ${LOGIN} --password-stdin'
+                        sh 'docker push ${DOCKER_REPO}:${IMG_NAME}'
+                    }
                 }
             }
         }
     }
 }
-
