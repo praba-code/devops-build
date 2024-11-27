@@ -53,7 +53,8 @@ pipeline {
                         sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
                         sudo docker stop my-nx || true
                         sudo docker rm my-nx || true
-                        sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
+                        #sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
+			sudo docker run -d -p 80:80 prabadevops1003/prod:my-nx
                         EOF
                     """
                 }
