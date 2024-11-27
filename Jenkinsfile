@@ -1,11 +1,11 @@
-pipeline {
+pipeline { 
     agent any
     environment {
         IMG_NAME = 'my-nx'
         DOCKER_REPO_DEV = 'prabadevops1003/dev'
         DOCKER_REPO_PROD = 'prabadevops1003/prod'
         EC2_IP = '18.139.227.199'  // Replace with actual EC2 IP
-	EC2_USER = 'ubuntu'
+        EC2_USER = 'ubuntu'
     }
     stages {
         stage('Build') {
@@ -22,9 +22,11 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'PSWD', usernameVariable: 'LOGIN')]) {
                     script {
-                        sh 'docker tag ${IMG_NAME} ${DOCKER_REPO_DEV}:${IMG_NAME}'
-                        sh 'echo ${PSWD} | docker login -u ${LOGIN} --password-stdin'
-                        sh 'docker push ${DOCKER_REPO_DEV}:${IMG_NAME}'
+                        sh '''
+                            docker tag ${IMG_NAME} ${DOCKER_REPO_DEV}:${IMG_NAME}
+                            echo ${PSWD} | docker login -u ${LOGIN} --password-stdin
+                            docker push ${DOCKER_REPO_DEV}:${IMG_NAME}
+                        '''
                     }
                 }
             }
@@ -36,9 +38,11 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'PSWD', usernameVariable: 'LOGIN')]) {
                     script {
-                        sh 'docker tag ${IMG_NAME} ${DOCKER_REPO_PROD}:${IMG_NAME}'
-                        sh 'echo ${PSWD} | docker login -u ${LOGIN} --password-stdin'
-                        sh 'docker push ${DOCKER_REPO_PROD}:${IMG_NAME}'
+                        sh '''
+                            docker tag ${IMG_NAME} ${DOCKER_REPO_PROD}:${IMG_NAME}
+                            echo ${PSWD} | docker login -u ${LOGIN} --password-stdin
+                            docker push ${DOCKER_REPO_PROD}:${IMG_NAME}
+                        '''
                     }
                 }
             }
@@ -47,51 +51,40 @@ pipeline {
             when {
                 branch 'main'
             }
- 	    steps {
+            steps {
                 sshagent(['ec2-ssh-credentials']) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} <<EOF
-                        set -e  # Exit immediately if a command exits with a non-zero status
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << EOF
+                        set -e
                         echo "Pulling the latest image..."
                         sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
-                        
-                        echo "Checking and stopping any container using port 80..."
-                        if sudo lsof -i :80; then
-                            sudo docker stop \$(sudo docker ps -q --filter "publish=80") || true
-                            sudo docker rm \$(sudo docker ps -aq --filter "publish=80") || true
+
+                        echo "Stopping any container running on port 80..."
+                        CONTAINER_ID=$(sudo docker ps -q --filter "ancestor=${DOCKER_REPO_PROD}:${IMG_NAME}")
+                        if [ ! -z "$CONTAINER_ID" ]; then
+                            sudo docker stop $CONTAINER_ID
+                            sudo docker rm $CONTAINER_ID
                         fi
 
-                        echo "Running new container..."
+                        echo "Running the new container..."
                         sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
                         echo "Deployment completed!"
                         EOF
-                    """
+                    '''
                 }
             }
         }
-    }	
+    }   
     post {
         always {
             echo 'Pipeline execution complete!'
         }
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Pipeline failed. Please check the logs for more details.'
+        }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
