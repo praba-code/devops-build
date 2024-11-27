@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials') // Store Docker Hub credentials in Jenkins
-        DOCKER_IMAGE = "your_dockerhub_username/dev-repo"
+        DOCKER_IMAGE = "prabadevops1003/dev"
     }
     triggers {
         githubPush()
@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'dev', url: 'https://github.com/your-username/your-repo.git'
+                git branch: 'dev', url: 'https://github.com/praba-code/devops-build.git'
             }
         }
         stage('Build Docker Image') {
