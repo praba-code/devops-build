@@ -5,6 +5,7 @@ pipeline {
         DOCKER_REPO_DEV = 'prabadevops1003/dev'
         DOCKER_REPO_PROD = 'prabadevops1003/prod'
         EC2_IP = '18.139.227.199'  // Replace with actual EC2 IP
+	EC2_USER = 'ubuntu'
     }
     stages {
         stage('Build') {
