@@ -49,14 +49,14 @@ pipeline {
  		steps {
         	sshagent(['ec2-ssh-credentials']) {  // SSH Key stored in Jenkins credentials
             	sh """
-                # Ensure SSH connection to EC2 and run commands
-                ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP} <<EOF
-                sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
-                sudo docker stop my-nx || true
-                sudo docker rm my-nx || true
-                sudo docker run -d -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
-                EOF
-            	"""
+                	# Ensure SSH connection to EC2 and run commands
+                	ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP} << EOF
+               	 	sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
+                	sudo docker stop my-nx || true
+                	sudo docker rm my-nx || true
+                	sudo docker run -d -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
+                	EOF
+          	"""
                 }
             }
         }
