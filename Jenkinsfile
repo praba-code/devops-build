@@ -51,9 +51,9 @@ pipeline {
                     sh """
                         ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP} << EOF
                         docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
-                        docker stop my-app || true
-                        docker rm my-app || true
-                        docker run -d --name my-app -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
+                        docker stop my-nx|| true
+                        docker rm my-nx|| true
+                        docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
                         EOF
                     """
                 }
