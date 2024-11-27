@@ -47,10 +47,10 @@ pipeline {
             when {
                 branch 'main'
             }
- 		steps {
+ 	    steps {
                 sshagent(['ec2-ssh-credentials']) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << 'EOF'
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} <<EOF
                         set -e  # Exit immediately if a command exits with a non-zero status
                         echo "Pulling the latest image..."
                         sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
@@ -69,7 +69,7 @@ pipeline {
                 }
             }
         }
-    }
+    }	
     post {
         always {
             echo 'Pipeline execution complete!'
