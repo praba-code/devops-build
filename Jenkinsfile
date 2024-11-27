@@ -50,6 +50,7 @@ pipeline {
                 sshagent(['ec2-ssh-credentials']) {  // SSH Key stored in Jenkins credentials
                     sh """
                         ssh -o StrictHostKeyChecking=no ubuntu@${EC2_IP} << EOF
+			echo "\$DOCKER_PASSWORD" | docker login --username "\$DOCKER_USERNAME" --password-stdin
                         docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
                         docker stop my-nx|| true
                         docker rm my-nx|| true
