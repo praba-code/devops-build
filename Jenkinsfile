@@ -61,8 +61,8 @@ pipeline {
                 sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
 
                 echo "Checking if container named my-nx is already running..."
-                CONTAINER_ID=$(sudo docker ps -q -f name=my-nx)
-                if [ ! -z "$CONTAINER_ID" ]; then
+                CONTAINER_ID=$(sudo docker ps -a -q -f name=my-nx)
+                if [ ! -n "$CONTAINER_ID" ]; then
                     echo "Stopping the existing container..."
                     sudo docker stop my-nx || true
                     echo "Removing the existing container..."
