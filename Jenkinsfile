@@ -58,7 +58,7 @@ pipeline {
                 set -e
 
                 echo "Pulling the latest image..."
-                sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
+                docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
 
                 echo "Checking if container named my-nx is already running..."
                 CONTAINER_ID=$(docker ps -a -q -f name=my-nx)
