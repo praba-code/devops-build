@@ -66,7 +66,7 @@ pipeline {
                     echo "Stopping the existing container..."
                     docker stop my-nx || true
                     echo "Removing the existing container..."
-                    docker rm my-nx || true
+                    docker rm -f my-nx || true
                 fi
 
                 echo "Running the new container..."
