@@ -54,7 +54,7 @@ pipeline {
             steps {
                 sshagent(['ec2-ssh-credentials']) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << EOF
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} 
                         set -e
 
                         echo "Pulling the latest image..."
@@ -62,17 +62,20 @@ pipeline {
 
                         echo "Checking and stopping any container using port 80..."
                         CONTAINER_ID=$(sudo docker ps -q -f name=my-nx)
-                        if [ ! -z "$CONTAINER_ID" ]; then
+                        if [ -n "$CONTAINER_ID" ]; then   
+		#if [ ! -z "$CONTAINER_ID" ]; then
                             echo "Stopping the existing container..."
-                            sudo docker stop my-nx || true
+			    sudo docker stop $CONTAINER_ID                            
+#sudo docker stop my-nx || true
                             echo "Forcefully removing the existing container..."
-                            sudo docker rm -f my-nx || true
+                            #sudo docker rm -f my-nx || true
+                            sudo -i docker rm $CONTAINER_ID
                         fi
 
                         echo "Running the new container..."
                         sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
                         echo "Deployment completed!"
-                        EOF
+                        
                     '''
                 }
             }
