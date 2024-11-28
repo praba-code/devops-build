@@ -54,7 +54,7 @@ pipeline {
     steps {
         sshagent(['ec2-ssh-credentials']) {
             sh '''
-             
+                ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << EOF
                 set -e
 
                 echo "Pulling the latest image..."
@@ -72,7 +72,7 @@ pipeline {
                 echo "Running the new container..."
                 sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
                 echo "Deployment completed!"
-		
+		EOF
               '''
                 }
             }
