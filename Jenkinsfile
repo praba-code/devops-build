@@ -1,4 +1,4 @@
-pipeline { 
+pipeline {
     agent any
     environment {
         IMG_NAME = 'my-nx'
@@ -47,33 +47,31 @@ pipeline {
                 }
             }
         }
-         stage('Deploy to EC2') {
-    when {
-        branch 'main'
-    }
-    steps {
-        sshagent(['ec2-ssh-credentials']) {
-            sh '''
-             
-                set -e
+        stage('Deploy to EC2') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sshagent(['ec2-ssh-credentials']) {
+                    sh '''
+                        set -e
 
-                echo "Pulling the latest image..."
-                docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
+                        echo "Pulling the latest image..."
+                        docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
 
-                echo "Checking if container named my-nx is already running..."
-                CONTAINER_ID=$(docker ps -a -q -f name=my-nx)
-                if [ ! -n "$CONTAINER_ID" ]; then
-                    echo "Stopping the existing container..."
-                    docker stop my-nx || true
-                    echo "Removing the existing container..."
-                    docker rm my-nx || true
-                fi
+                        echo "Checking if container named my-nx is already running..."
+                        CONTAINER_ID=$(docker ps -a -q -f name=my-nx)
+                        if [ ! -n "$CONTAINER_ID" ]; then
+                            echo "Stopping the existing container..."
+                            docker stop my-nx || true
+                            echo "Removing the existing container..."
+                            docker rm my-nx || true
+                        fi
 
-                echo "Running the new container..."
-                docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
-                echo "Deployment completed!"
-		
-              '''
+                        echo "Running the new container..."
+                        docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
+                        echo "Deployment completed!"
+                    '''
                 }
             }
         }
