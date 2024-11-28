@@ -47,33 +47,33 @@ pipeline {
                 }
             }
         }
-         stage('Deploy to EC2') {
-    when {
-        branch 'main'
-    }
-    steps {
-        sshagent(['ec2-ssh-credentials']) {
-            sh '''
-                ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << EOF
-                set -e
+        stage('Deploy to EC2') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sshagent(['ec2-ssh-credentials']) {
+                    sh '''
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} <<EOF
+                        set -e
 
-                echo "Pulling the latest image..."
-                sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
+                        echo "Pulling the latest image..."
+                        sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
 
-                echo "Checking if container named my-nx is already running..."
-                CONTAINER_ID=$(sudo docker ps -a -q -f name=my-nx)
-                if [ ! -n "$CONTAINER_ID" ]; then
-                    echo "Stopping the existing container..."
-                    sudo docker stop my-nx || true
-                    echo "Removing the existing container..."
-                    sudo docker rm my-nx || true
-                fi
+                        echo "Checking if container named my-nx is already running..."
+                        CONTAINER_ID=$(sudo docker ps -a -q -f name=my-nx)
+                        if [ ! -n "$CONTAINER_ID" ]; then
+                            echo "Stopping the existing container..."
+                            sudo docker stop my-nx || true
+                            echo "Removing the existing container..."
+                            sudo docker rm my-nx || true
+                        fi
 
-                echo "Running the new container..."
-                sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
-                echo "Deployment completed!"
-		EOF
-              '''
+                        echo "Running the new container..."
+                        sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
+                        echo "Deployment completed!"
+                        EOF
+                    '''
                 }
             }
         }
