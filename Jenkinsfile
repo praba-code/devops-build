@@ -4,7 +4,7 @@ pipeline {
         IMG_NAME = 'my-nx'
         DOCKER_REPO_DEV = 'prabadevops1003/dev'
         DOCKER_REPO_PROD = 'prabadevops1003/prod'
-        EC2_IP = '13.212.254.9'  // Replace with actual EC2 IP
+        EC2_IP = '18.139.227.199'  // Replace with actual EC2 IP
         EC2_USER = 'ubuntu'
     }
     stages {
@@ -47,36 +47,33 @@ pipeline {
                 }
             }
         }
-        stage('Deploy to EC2') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sshagent(['ec2-ssh-credentials']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} 
-                        set -e
+         stage('Deploy to EC2') {
+    when {
+        branch 'main'
+    }
+    steps {
+        sshagent(['ec2-ssh-credentials']) {
+            sh '''
+                ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << EOF
+                set -e
 
-                        echo "Pulling the latest image..."
-                        sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
+                echo "Pulling the latest image..."
+                sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
 
-                        echo "Checking and stopping any container using port 80..."
-                        CONTAINER_ID=$(sudo docker ps -q -f name=my-nx)
-                        if [ -n "$CONTAINER_ID" ]; then   
-		#if [ ! -z "$CONTAINER_ID" ]; then
-                            echo "Stopping the existing container..."
-			    sudo docker stop $CONTAINER_ID                            
-#sudo docker stop my-nx || true
-                            echo "Forcefully removing the existing container..."
-                            #sudo docker rm -f my-nx || true
-                            sudo -i docker rm $CONTAINER_ID
-                        fi
+                echo "Checking if container named my-nx is already running..."
+                CONTAINER_ID=$(sudo docker ps -q -f name=my-nx)
+                if [ ! -z "$CONTAINER_ID" ]; then
+                    echo "Stopping the existing container..."
+                    sudo docker stop my-nx || true
+                    echo "Removing the existing container..."
+                    sudo docker rm my-nx || true
+                fi
 
-                        echo "Running the new container..."
-                        sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
-                        echo "Deployment completed!"
-                        
-                    '''
+                echo "Running the new container..."
+                sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
+                echo "Deployment completed!"
+                EOF
+              '''
                 }
             }
         }
@@ -89,8 +86,7 @@ pipeline {
             echo 'Deployment successful!'
         }
         failure {
-            echo 'Pipeline execution failed. Please check the logs.'
+            echo 'Pipeline failed. Please check the logs for more details.'
         }
     }
 }
-
