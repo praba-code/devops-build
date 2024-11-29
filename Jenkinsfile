@@ -5,7 +5,7 @@ pipeline {
         TAG = "${env.BUILD_NUMBER}"
         DOCKER_REPO_DEV = 'prabadevops1003/dev'
         DOCKER_REPO_PROD = 'prabadevops1003/prod'
-        EC2_IP = '54.169.85.62'  // Replace with actual EC2 IP
+        EC2_IP = '54.169.85.62'  // Replace with your actual EC2 IP
         EC2_USER = 'ubuntu'
     }
     stages {
@@ -57,18 +57,20 @@ pipeline {
                     sh """
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << 'EOF'
                         docker pull ${DOCKER_REPO_PROD}:${TAG}
-                        CONTAINER_ID=$(docker ps -a -q -f name=my-nx)
-                        if [ -n "$CONTAINER_ID" ]; then
+                        CONTAINER_ID=\$(docker ps -a -q -f name=my-nx)
+                        if [ -n "\$CONTAINER_ID" ]; then
+                            echo "Stopping and removing existing container..."
                             docker stop my-nx || true
                             docker rm my-nx || true
                         fi
+                        echo "Running the new container..."
                         docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${TAG}
                         EOF
                     """
                 }
             }
         }
-    }   
+    }
     post {
         always {
             echo 'Pipeline execution complete!'
