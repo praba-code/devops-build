@@ -4,14 +4,14 @@ pipeline {
         IMG_NAME = 'my-nx'
         DOCKER_REPO_DEV = 'prabadevops1003/dev'
         DOCKER_REPO_PROD = 'prabadevops1003/prod'
-        EC2_IP = '54.169.85.62'  // Replace with actual EC2 IP
+        EC2_IP = '54.169.85.62'
         EC2_USER = 'ubuntu'
     }
     stages {
         stage('Build') {
             steps {
                 script {
-                    sh 'docker build -t ${IMG_NAME} .'
+                    sh "docker build -t ${IMG_NAME} ."
                 }
             }
         }
@@ -22,11 +22,11 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'PSWD', usernameVariable: 'LOGIN')]) {
                     script {
-                        sh '''
+                        sh """
                             docker tag ${IMG_NAME} ${DOCKER_REPO_DEV}:${IMG_NAME}
                             echo ${PSWD} | docker login -u ${LOGIN} --password-stdin
                             docker push ${DOCKER_REPO_DEV}:${IMG_NAME}
-                        '''
+                        """
                     }
                 }
             }
@@ -38,11 +38,11 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'PSWD', usernameVariable: 'LOGIN')]) {
                     script {
-                        sh '''
+                        sh """
                             docker tag ${IMG_NAME} ${DOCKER_REPO_PROD}:${IMG_NAME}
                             echo ${PSWD} | docker login -u ${LOGIN} --password-stdin
                             docker push ${DOCKER_REPO_PROD}:${IMG_NAME}
-                        '''
+                        """
                     }
                 }
             }
@@ -53,27 +53,24 @@ pipeline {
             }
             steps {
                 sshagent(['ec2-ssh-credentials']) {
-                    sh '''
+                    sh """
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} <<EOF
                         set -e
-
                         echo "Pulling the latest image..."
                         sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
-
-                        echo "Checking if container named my-nx is already running..."
-                        CONTAINER_ID=$(sudo docker ps -a -q -f name=my-nx)
-                        if [ ! -n "$CONTAINER_ID" ]; then
+                        
+                        CONTAINER_ID=\$(sudo docker ps -a -q -f name=my-nx)
+                        if [ -n "\$CONTAINER_ID" ]; then
                             echo "Stopping the existing container..."
                             sudo docker stop my-nx || true
-                            echo "Removing the existing container..."
                             sudo docker rm my-nx || true
                         fi
-
+                        
                         echo "Running the new container..."
                         sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
                         echo "Deployment completed!"
                         EOF
-                    '''
+                    """
                 }
             }
         }
