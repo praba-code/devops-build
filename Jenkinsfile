@@ -54,7 +54,7 @@ pipeline {
     steps {
         sshagent(['ec2-ssh-credentials']) {
             sh '''
-                
+                ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP}
                 set -e
 
                 echo "Pulling the latest image..."
