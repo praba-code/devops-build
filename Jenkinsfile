@@ -4,7 +4,7 @@ pipeline {
         IMG_NAME = 'my-nx'
         DOCKER_REPO_DEV = 'prabadevops1003/dev'
         DOCKER_REPO_PROD = 'prabadevops1003/prod'
-        EC2_IP = '13.212.254.9'  // Replace with actual EC2 IP
+        EC2_IP = '54.169.85.62'  // Replace with actual EC2 IP
         EC2_USER = 'ubuntu'
     }
     stages {
