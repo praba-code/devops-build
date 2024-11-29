@@ -2,6 +2,7 @@ pipeline {
     agent any
     environment {
         IMG_NAME = 'my-nx'
+        TAG = "${env.BUILD_NUMBER}"
         DOCKER_REPO_DEV = 'prabadevops1003/dev'
         DOCKER_REPO_PROD = 'prabadevops1003/prod'
         EC2_IP = '54.169.85.62'  // Replace with actual EC2 IP
@@ -11,7 +12,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    sh 'docker build -t ${IMG_NAME} .'
+                    sh 'docker build -t ${IMG_NAME}:${TAG} .'
                 }
             }
         }
@@ -23,9 +24,9 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'PSWD', usernameVariable: 'LOGIN')]) {
                     script {
                         sh '''
-                            docker tag ${IMG_NAME} ${DOCKER_REPO_DEV}:${IMG_NAME}
+                            docker tag ${IMG_NAME}:${TAG} ${DOCKER_REPO_DEV}:${TAG}
                             echo ${PSWD} | docker login -u ${LOGIN} --password-stdin
-                            docker push ${DOCKER_REPO_DEV}:${IMG_NAME}
+                            docker push ${DOCKER_REPO_DEV}:${TAG}
                         '''
                     }
                 }
@@ -39,38 +40,31 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'PSWD', usernameVariable: 'LOGIN')]) {
                     script {
                         sh '''
-                            docker tag ${IMG_NAME} ${DOCKER_REPO_PROD}:${IMG_NAME}
+                            docker tag ${IMG_NAME}:${TAG} ${DOCKER_REPO_PROD}:${TAG}
                             echo ${PSWD} | docker login -u ${LOGIN} --password-stdin
-                            docker push ${DOCKER_REPO_PROD}:${IMG_NAME}
+                            docker push ${DOCKER_REPO_PROD}:${TAG}
                         '''
                     }
                 }
             }
         }
-         stage('Deploy to EC2') {
-    when {
-        branch 'main'
-    }
-    steps {
-        sshagent(['ec2-ssh-credentials']) {
-            sh '''
-             
-                set -e
-                echo "Pulling the latest image..."
-                docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
-                echo "Checking if container named my-nx is already running..."
-                CONTAINER_ID=$(docker ps -a -q -f name=my-nx)
-                if [ ! -n "$CONTAINER_ID" ]; then
-                    echo "Stopping the existing container..."
-                    docker stop my-nx || true
-                    echo "Removing the existing container..."
-                    docker rm my-nx || true
-                fi
-                echo "Running the new container..."
-                docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
-                echo "Deployment completed!"
-		
-              '''
+        stage('Deploy to EC2') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sshagent(['ec2-ssh-credentials']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << 'EOF'
+                        docker pull ${DOCKER_REPO_PROD}:${TAG}
+                        CONTAINER_ID=$(docker ps -a -q -f name=my-nx)
+                        if [ -n "$CONTAINER_ID" ]; then
+                            docker stop my-nx || true
+                            docker rm my-nx || true
+                        fi
+                        docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${TAG}
+                        EOF
+                    """
                 }
             }
         }
