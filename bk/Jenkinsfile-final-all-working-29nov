@@ -4,7 +4,7 @@ pipeline {
         IMG_NAME = 'my-nx'
         DOCKER_REPO_DEV = 'prabadevops1003/dev'
         DOCKER_REPO_PROD = 'prabadevops1003/prod'
-        EC2_IP = '18.139.227.199'  // Replace with actual EC2 IP
+        EC2_IP = '54.169.85.62'  // Replace with actual EC2 IP
         EC2_USER = 'ubuntu'
     }
     stages {
@@ -54,15 +54,15 @@ pipeline {
     steps {
         sshagent(['ec2-ssh-credentials']) {
             sh '''
-                ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} << EOF
+                ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} <<EOF
                 set -e
 
                 echo "Pulling the latest image..."
                 sudo docker pull ${DOCKER_REPO_PROD}:${IMG_NAME}
 
                 echo "Checking if container named my-nx is already running..."
-                CONTAINER_ID=$(sudo docker ps -q -f name=my-nx)
-                if [ ! -z "$CONTAINER_ID" ]; then
+                CONTAINER_ID=$(sudo docker ps -a -q -f name=my-nx)
+                if [ ! -n "$CONTAINER_ID" ]; then
                     echo "Stopping the existing container..."
                     sudo docker stop my-nx || true
                     echo "Removing the existing container..."
@@ -72,7 +72,7 @@ pipeline {
                 echo "Running the new container..."
                 sudo docker run -d --name my-nx -p 80:80 ${DOCKER_REPO_PROD}:${IMG_NAME}
                 echo "Deployment completed!"
-                EOF
+EOF
               '''
                 }
             }
@@ -90,4 +90,3 @@ pipeline {
         }
     }
 }
-
